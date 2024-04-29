@@ -33,6 +33,10 @@ var timedelta
 
 var wish_jump: bool = false
 
+# FIXME: fix acceleration not being applied correctly (maybe)
+# FIXME: Fix movement being super slow, and just generally make the code more accurate by scaling by ,ove forward and right variables, als ofigure out what their defaults are
+
+
 
 func apply_friction() -> void:
     # https://github.com/id-Software/Quake-III-Arena/blob/dbe4ddb10315479fc00086f08e25d968b4b43c49/code/game/bg_pmove.c#L172-L230
