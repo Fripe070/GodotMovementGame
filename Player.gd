@@ -7,26 +7,20 @@ var gravity: float = ProjectSettings.get_setting("physics/3d/default_gravity")
 @export var max_up_angle: float = 90.0
 @export var max_down_angle: float = -90.0
 @onready var neck := $Neck
-@onready var camera := $Neck/Camera
-
-@export_group("Sliding")
-@export var crouch_scale_y: float = 0.5
-@onready var normal_scale_y: float = 1.0
-@onready var collider_shape: CapsuleShape3D = $CollisionShape3D.shape
-
+@onready var camera := $Neck/Camer
 
 @export_group("Inputs")
 @export var move_forward = 1
 @export var move_right = 1
+@export var autojump: bool = false
 
 @export_group("Movement")
-var jump_velocity: float = 270 / 50
+@export var jump_velocity: float = 270 / 50
+@export var normal_acceleration: float = 20.0
+@export var air_accelerate: float = 4.0
+@export var friction: float = 20.0
+@export var stop_speed: float = 10.0
 
-var stop_speed: float = 100.0
-var normal_acceleration: float = 20.0
-var air_accelerate: float = 1.0
-var friction: float = 6.0
-var max_speed = 50.0
 
 
 var timedelta
@@ -60,7 +54,6 @@ func apply_friction() -> void:
     velocity *= new_speed
 
 
-
 func accelerate(wish_dir: Vector3, wish_speed: float, accel: float):
     # https://github.com/ValveSoftware/source-sdk-2013/blob/0d8dceea4310fde5706b3ce1c70609d72a38efdf/sp/src/game/shared/gamemovement.cpp#L1822-L1854
     # This gives cause for a lot of movement tech
@@ -79,22 +72,72 @@ func accelerate(wish_dir: Vector3, wish_speed: float, accel: float):
     velocity += wish_dir * accel_speed
 
 
-func _physics_process(delta):
-    timedelta = delta
+func air_move() -> void:
+    # https://github.com/id-Software/Quake-III-Arena/blob/dbe4ddb10315479fc00086f08e25d968b4b43c49/code/game/bg_pmove.c#L601-L658
+    apply_friction()
+    #print("Jump")
     
-    # FIXME: Allows for a bit kinder jumping, I might remove this later.
-    if Input.is_action_just_pressed(&"jump"):
-        wish_jump = true
-    elif Input.is_action_just_released(&"jump"):
-        wish_jump = false
     
     var input_dir = Input.get_vector(&"move_left", &"move_right", &"move_forward", &"move_backward")
     var move_dir: Vector3 = (transform.basis * Vector3(input_dir.x, 0, input_dir.y)).normalized()
     
-    accelerate(move_dir, 430, normal_acceleration)
+    accelerate(move_dir, 10, air_accelerate)
+    
+    # Is this where surfing takes place?
+    # https://github.com/id-Software/Quake-III-Arena/blob/dbe4ddb10315479fc00086f08e25d968b4b43c49/code/game/bg_pmove.c#L639-L645
+    
+    
+func walk_move() -> void:
+    # https://github.com/id-Software/Quake-III-Arena/blob/dbe4ddb10315479fc00086f08e25d968b4b43c49/code/game/bg_pmove.c#L692-L809
+    if wish_jump and is_on_floor():
+        wish_jump = false
+        air_move()
+        velocity.y = jump_velocity
+        return
+    
+    apply_friction()
+    
+    # FIXME: Scale by moveright and moveforward
+    #var forward = Input.get_action_strength(&"move_forward") - Input.get_action_strength(&"move_backward")
+    #var right = Input.get_action_strength(&"move_right") - Input.get_action_strength(&"move_left")
+    
+    var input_dir = Input.get_vector(&"move_left", &"move_right", &"move_forward", &"move_backward")
+    var move_dir: Vector3 = (transform.basis * Vector3(input_dir.x, 0, input_dir.y)).normalized()
+    
+    # FIXME: Crouch speed adjust?
+    # https://github.com/id-Software/Quake-III-Arena/blob/dbe4ddb10315479fc00086f08e25d968b4b43c49/code/game/bg_pmove.c#L752-L757
+    
+    # FIXME: More sliding shenanigans
+    # https://github.com/id-Software/Quake-III-Arena/blob/dbe4ddb10315479fc00086f08e25d968b4b43c49/code/game/bg_pmove.c#L770-L776
+    # Look out for anything mentioning SURF_SLICK?
+    
+    accelerate(move_dir, 6, normal_acceleration)
+    
+
+
+func _physics_process(delta):
+    timedelta = delta
+    
+    # FIXME: Allows for a bit kinder jumping, I might remove this later.
+    if autojump:
+        wish_jump = Input.is_action_pressed(&"jump")
+    elif Input.is_action_just_pressed(&"jump"):
+        wish_jump = true
+    elif Input.is_action_just_released(&"jump"):
+        wish_jump = false
+    
+    # https://github.com/id-Software/Quake-III-Arena/blob/dbe4ddb10315479fc00086f08e25d968b4b43c49/code/game/bg_pmove.c#L1988-L1994
+    #if is_on_floor():
+    if is_on_floor():
+        walk_move()
+    else:
+        air_move()
     
     if not is_on_floor():
-        velocity.y -= gravity * timedelta
+        velocity.y -= gravity * delta
+        
+    # I prob need to implemenet the contents of PM_StepSlideMove
+    move_and_slide()
 
 
 func _unhandled_input(event: InputEvent) -> void:

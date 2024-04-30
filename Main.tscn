@@ -1,4 +1,4 @@
-[gd_scene load_steps=7 format=3 uid="uid://5o1x2u3d0nfv"]
+[gd_scene load_steps=9 format=3 uid="uid://5o1x2u3d0nfv"]
 
 [ext_resource type="PackedScene" uid="uid://d1rf8jxqx2lvx" path="res://Player.tscn" id="1_mykwi"]
 
@@ -19,6 +19,11 @@ glow_enabled = true
 [sub_resource type="WorldBoundaryShape3D" id="WorldBoundaryShape3D_4kt2x"]
 
 [sub_resource type="PlaneMesh" id="PlaneMesh_l8oow"]
+size = Vector2(8, 8)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_u4ml2"]
+
+[sub_resource type="BoxMesh" id="BoxMesh_2u84b"]
 
 [node name="Node3D" type="Node3D"]
 
@@ -31,6 +36,7 @@ shadow_enabled = true
 
 [node name="Player" parent="." instance=ExtResource("1_mykwi")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 3.51895, 0)
+autojump = true
 
 [node name="Ground" type="StaticBody3D" parent="."]
 
@@ -40,3 +46,12 @@ shape = SubResource("WorldBoundaryShape3D_4kt2x")
 [node name="MeshInstance3D" type="MeshInstance3D" parent="Ground"]
 transform = Transform3D(5, 0, 0, 0, 5, 0, 0, 0, 5, 0, 0, 0)
 mesh = SubResource("PlaneMesh_l8oow")
+
+[node name="Area3D" type="Area3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.676321, 3.89702)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Area3D"]
+shape = SubResource("BoxShape3D_u4ml2")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="Area3D"]
+mesh = SubResource("BoxMesh_2u84b")
