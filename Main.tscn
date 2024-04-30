@@ -1,4 +1,4 @@
-[gd_scene load_steps=9 format=3 uid="uid://5o1x2u3d0nfv"]
+[gd_scene load_steps=11 format=3 uid="uid://5o1x2u3d0nfv"]
 
 [ext_resource type="PackedScene" uid="uid://d1rf8jxqx2lvx" path="res://Player.tscn" id="1_mykwi"]
 
@@ -24,6 +24,11 @@ size = Vector2(8, 8)
 [sub_resource type="BoxShape3D" id="BoxShape3D_u4ml2"]
 
 [sub_resource type="BoxMesh" id="BoxMesh_2u84b"]
+
+[sub_resource type="PrismMesh" id="PrismMesh_pbnib"]
+
+[sub_resource type="ConcavePolygonShape3D" id="ConcavePolygonShape3D_0e4of"]
+data = PackedVector3Array(0, 0.5, 0.5, 0.5, -0.5, 0.5, -0.5, -0.5, 0.5, 0, 0.5, -0.5, -0.5, -0.5, -0.5, 0.5, -0.5, -0.5, 0, 0.5, 0.5, 0, 0.5, -0.5, 0.5, -0.5, 0.5, 0, 0.5, -0.5, 0.5, -0.5, -0.5, 0.5, -0.5, 0.5, 0, 0.5, -0.5, 0, 0.5, 0.5, -0.5, -0.5, -0.5, 0, 0.5, 0.5, -0.5, -0.5, 0.5, -0.5, -0.5, -0.5, -0.5, -0.5, 0.5, 0.5, -0.5, 0.5, -0.5, -0.5, -0.5, 0.5, -0.5, 0.5, 0.5, -0.5, -0.5, -0.5, -0.5, -0.5)
 
 [node name="Node3D" type="Node3D"]
 
@@ -55,3 +60,21 @@ shape = SubResource("BoxShape3D_u4ml2")
 
 [node name="MeshInstance3D" type="MeshInstance3D" parent="Area3D"]
 mesh = SubResource("BoxMesh_2u84b")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="."]
+transform = Transform3D(50.04, 0, 0, 0, 7.795, 0, 0, 0, 4.11, 37.635, 3.643, 0)
+mesh = SubResource("PrismMesh_pbnib")
+
+[node name="StaticBody3D" type="StaticBody3D" parent="MeshInstance3D"]
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="MeshInstance3D/StaticBody3D"]
+shape = SubResource("ConcavePolygonShape3D_0e4of")
+
+[node name="MeshInstance3D2" type="MeshInstance3D" parent="."]
+transform = Transform3D(3.96, 0, 0, 0, 2.92, 0, 0, 0, 81.89, -22.241, 1.304, 16.927)
+mesh = SubResource("PrismMesh_pbnib")
+
+[node name="StaticBody3D" type="StaticBody3D" parent="MeshInstance3D2"]
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="MeshInstance3D2/StaticBody3D"]
+shape = SubResource("ConcavePolygonShape3D_0e4of")

@@ -17,15 +17,18 @@ var gravity: float = ProjectSettings.get_setting("physics/3d/default_gravity")
 @export_group("Movement")
 @export var jump_velocity: float = 270 / 50
 @export var normal_acceleration: float = 20.0
-@export var air_accelerate: float = 1.0
+@export var air_acceleration: float = 100.0
 @export var friction: float = 20.0
 @export var stop_speed: float = 10.0
+
+@export var air_speed_cap: float = 30.0
 
 
 
 var timedelta
 
 var wish_jump: bool = false
+var third_person: bool = false
 
 # FIXME: fix acceleration not being applied correctly (maybe)
 # FIXME: Fix movement being super slow, and just generally make the code more accurate by scaling by ,ove forward and right variables, als ofigure out what their defaults are
@@ -65,6 +68,29 @@ func apply_friction() -> void:
     velocity *= new_speed
 
 
+func air_accelerate(wish_dir: Vector3, wish_speed: float, accel: float):
+    # https://github.com/ValveSoftware/source-sdk-2013/blob/0d8dceea4310fde5706b3ce1c70609d72a38efdf/sp/src/game/shared/gamemovement.cpp#L1707-L1748
+
+    var wish_speed2 = wish_speed  # ?
+    
+    if wish_speed > air_speed_cap:
+        wish_speed = air_speed_cap
+    
+    var current_speed = velocity.dot(wish_dir)
+    
+    var add_speed = wish_speed - current_speed
+    if add_speed <= 0:
+        return
+    
+    const surface_friction = 1
+    var accel_speed = timedelta * accel * wish_speed2 * surface_friction;
+    
+    if accel_speed > add_speed:
+        accel_speed = add_speed
+        
+    velocity += wish_dir * accel_speed
+    
+
 func accelerate(wish_dir: Vector3, wish_speed: float, accel: float):
     # https://github.com/ValveSoftware/source-sdk-2013/blob/0d8dceea4310fde5706b3ce1c70609d72a38efdf/sp/src/game/shared/gamemovement.cpp#L1822-L1854
     # This gives cause for a lot of movement tech
@@ -91,7 +117,7 @@ func air_move() -> void:
     
     var move_dir: Vector3 = get_input_dir()
     
-    accelerate(move_dir, 10, air_accelerate)
+    air_accelerate(move_dir, 10, air_acceleration)
     
     # Is this where surfing takes place?
     # https://github.com/id-Software/Quake-III-Arena/blob/dbe4ddb10315479fc00086f08e25d968b4b43c49/code/game/bg_pmove.c#L639-L645
@@ -127,6 +153,12 @@ func walk_move() -> void:
 func _physics_process(delta):
     timedelta = delta
     
+    if Input.is_action_just_pressed(&"third_person"):
+        third_person = not third_person
+        
+    camera.position.z = 5 if third_person else 0
+    
+    
     # FIXME: Allows for a bit kinder jumping, I might remove this later.
     if autojump:
         wish_jump = Input.is_action_pressed(&"jump")
@@ -156,5 +188,5 @@ func _unhandled_input(event: InputEvent) -> void:
         Input.set_mouse_mode(Input.MOUSE_MODE_VISIBLE)
     if event is InputEventMouseMotion and Input.get_mouse_mode() == Input.MOUSE_MODE_CAPTURED:
         rotate_y(-event.relative.x * look_sensitivity)
-        camera.rotate_x(-event.relative.y * look_sensitivity)
-        camera.rotation.x = clamp(camera.rotation.x, deg_to_rad(max_down_angle), deg_to_rad(max_up_angle))
+        neck.rotate_x(-event.relative.y * look_sensitivity)
+        neck.rotation.x = clamp(neck.rotation.x, deg_to_rad(max_down_angle), deg_to_rad(max_up_angle))
