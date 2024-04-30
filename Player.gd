@@ -7,7 +7,7 @@ var gravity: float = ProjectSettings.get_setting("physics/3d/default_gravity")
 @export var max_up_angle: float = 90.0
 @export var max_down_angle: float = -90.0
 @onready var neck := $Neck
-@onready var camera := $Neck/Camer
+@onready var camera := $Neck/Camera
 
 @export_group("Inputs")
 @export var move_forward = 1

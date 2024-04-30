@@ -3,8 +3,10 @@
 [ext_resource type="Script" path="res://Player.gd" id="1_tnwjw"]
 
 [sub_resource type="CapsuleShape3D" id="CapsuleShape3D_lbcg4"]
+radius = 0.35
 
 [sub_resource type="CapsuleMesh" id="CapsuleMesh_4yle5"]
+radius = 0.35
 
 [node name="Player" type="CharacterBody3D"]
 script = ExtResource("1_tnwjw")
