@@ -10,14 +10,14 @@ var gravity: float = ProjectSettings.get_setting("physics/3d/default_gravity")
 @onready var camera := $Neck/Camera
 
 @export_group("Inputs")
-@export var move_forward = 1
-@export var move_right = 1
+@export var forward_importance = 1.0
+@export var side_importance = 1.0
 @export var autojump: bool = false
 
 @export_group("Movement")
 @export var jump_velocity: float = 270 / 50
 @export var normal_acceleration: float = 20.0
-@export var air_accelerate: float = 4.0
+@export var air_accelerate: float = 1.0
 @export var friction: float = 20.0
 @export var stop_speed: float = 10.0
 
@@ -31,6 +31,17 @@ var wish_jump: bool = false
 # FIXME: Fix movement being super slow, and just generally make the code more accurate by scaling by ,ove forward and right variables, als ofigure out what their defaults are
 
 
+func get_input_dir():
+    # Something is wrong with my math... it should be forward - backward?
+    var forwards = Input.get_action_strength(&"move_backward") - Input.get_action_strength(&"move_forward")
+    var right = Input.get_action_strength(&"move_right") - Input.get_action_strength(&"move_left")
+    
+    return (transform.basis * Vector3(
+        right * side_importance, 
+        0, 
+        forwards * forward_importance,
+    )).normalized()
+    
 
 func apply_friction() -> void:
     # https://github.com/id-Software/Quake-III-Arena/blob/dbe4ddb10315479fc00086f08e25d968b4b43c49/code/game/bg_pmove.c#L172-L230
@@ -78,8 +89,7 @@ func air_move() -> void:
     #print("Jump")
     
     
-    var input_dir = Input.get_vector(&"move_left", &"move_right", &"move_forward", &"move_backward")
-    var move_dir: Vector3 = (transform.basis * Vector3(input_dir.x, 0, input_dir.y)).normalized()
+    var move_dir: Vector3 = get_input_dir()
     
     accelerate(move_dir, 10, air_accelerate)
     
@@ -101,8 +111,7 @@ func walk_move() -> void:
     #var forward = Input.get_action_strength(&"move_forward") - Input.get_action_strength(&"move_backward")
     #var right = Input.get_action_strength(&"move_right") - Input.get_action_strength(&"move_left")
     
-    var input_dir = Input.get_vector(&"move_left", &"move_right", &"move_forward", &"move_backward")
-    var move_dir: Vector3 = (transform.basis * Vector3(input_dir.x, 0, input_dir.y)).normalized()
+    var move_dir: Vector3 = get_input_dir()
     
     # FIXME: Crouch speed adjust?
     # https://github.com/id-Software/Quake-III-Arena/blob/dbe4ddb10315479fc00086f08e25d968b4b43c49/code/game/bg_pmove.c#L752-L757
