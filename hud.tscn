@@ -35,6 +35,14 @@ offset_bottom = 173.0
 text = "0"
 label_settings = SubResource("LabelSettings_wvvtw")
 
+[node name="groundedLabel" type="Label" parent="."]
+offset_left = 8.0
+offset_top = 173.0
+offset_right = 125.0
+offset_bottom = 228.0
+text = "Grounded"
+label_settings = SubResource("LabelSettings_wvvtw")
+
 [node name="FPSLabel" type="Label" parent="."]
 layout_direction = 3
 offset_left = 9.0
