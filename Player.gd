@@ -25,6 +25,8 @@ var gravity: float = ProjectSettings.get_setting("physics/3d/default_gravity")
 @export var snap_tp_stationary_speed: float = 1.0
 @export var max_ground_speed: float = 10.0
 @export var max_air_speed: float = 1.5
+# We may want the player to fall slightly faster than other objects
+@export var gravity_mult: float = 1.0
 
 @export_group("Quirky Movement")
 @export var bhop_frame_window: int = 2
@@ -110,6 +112,7 @@ func tick_movement() -> void:
     is_on_ground = is_on_floor()
     
     # https://www.ryanliptak.com/blog/rampsliding-quake-engine-quirk/#what-about-surfing-like-in-counter-strike-surf-maps
+    # https://github.com/id-Software/Quake/blob/bf4ac424ce754894ac8f1dae6a3981954bc9852d/QW/client/pmove.c#L587-L590
     if velocity.y > 180:  # FIXME: 180 is an absurd value in this ctx... div by like 50 or smth
         is_on_ground = false
         
@@ -121,7 +124,7 @@ func tick_movement() -> void:
     
     var input_dir = get_input_dir()
     accelerate(input_dir, max_speed, acceleration)
-    velocity.y -= gravity * timedelta
+    velocity.y -= gravity * gravity_mult * timedelta
     
     var wish_jump: bool = false
     if auto_jump:

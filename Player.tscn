@@ -131,6 +131,7 @@ _data = {
 [node name="Player" type="CharacterBody3D" node_paths=PackedStringArray("animation_player")]
 script = ExtResource("1_tnwjw")
 animation_player = NodePath("AnimationPlayer")
+gravity_mult = 1.05
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.5, 0)

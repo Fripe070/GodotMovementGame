@@ -37,7 +37,6 @@ label_settings = SubResource("LabelSettings_wvvtw")
 
 [node name="FPSLabel" type="Label" parent="."]
 layout_direction = 3
-anchors_preset = -1
 offset_left = 9.0
 offset_top = 8.0
 offset_right = 144.0
