@@ -44,7 +44,6 @@ transform = Transform3D(-0.866023, -0.433016, 0.250001, 0, 0.499998, 0.866027, -
 shadow_enabled = true
 
 [node name="Player" parent="." instance=ExtResource("1_mykwi")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 3.51895, 0)
 auto_jump = true
 
 [node name="Ground" type="StaticBody3D" parent="."]
@@ -189,4 +188,41 @@ mesh = SubResource("BoxMesh_rcixd")
 [node name="StaticBody3D2" type="StaticBody3D" parent="MeshInstance3D14"]
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="MeshInstance3D14/StaticBody3D2"]
+shape = SubResource("BoxShape3D_p81u1")
+
+[node name="MeshInstance3D15" type="MeshInstance3D" parent="."]
+transform = Transform3D(4.83526, 0, 0, 0, 0.2, 0, 0, 0, 4.97101, -2.414, 1.26714, -32.329)
+mesh = SubResource("BoxMesh_rcixd")
+
+[node name="StaticBody3D2" type="StaticBody3D" parent="MeshInstance3D15"]
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="MeshInstance3D15/StaticBody3D2"]
+shape = SubResource("BoxShape3D_p81u1")
+
+[node name="MeshInstance3D16" type="MeshInstance3D" parent="."]
+transform = Transform3D(4.83526, 0, 0, 0, 0.2, 0, 0, 0, 4.97101, 1.7469, 2.26714, -32.329)
+mesh = SubResource("BoxMesh_rcixd")
+
+[node name="StaticBody3D2" type="StaticBody3D" parent="MeshInstance3D16"]
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="MeshInstance3D16/StaticBody3D2"]
+shape = SubResource("BoxShape3D_p81u1")
+
+[node name="MeshInstance3D17" type="MeshInstance3D" parent="."]
+transform = Transform3D(4.83526, 0, 0, 0, 0.2, 0, 0, 0, 4.97101, 4.7469, 2.36534, -32.329)
+mesh = SubResource("BoxMesh_rcixd")
+
+[node name="StaticBody3D2" type="StaticBody3D" parent="MeshInstance3D17"]
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="MeshInstance3D17/StaticBody3D2"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0)
+shape = SubResource("BoxShape3D_p81u1")
+
+[node name="MeshInstance3D18" type="MeshInstance3D" parent="."]
+transform = Transform3D(3.61305, 0.132913, 0, -3.21335, 0.149446, 0, 0, 0, 4.97101, 9.03202, 0.966982, -32.329)
+mesh = SubResource("BoxMesh_rcixd")
+
+[node name="StaticBody3D2" type="StaticBody3D" parent="MeshInstance3D18"]
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="MeshInstance3D18/StaticBody3D2"]
 shape = SubResource("BoxShape3D_p81u1")

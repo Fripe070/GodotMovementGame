@@ -2,6 +2,8 @@ extends CharacterBody3D
 
 var gravity: float = ProjectSettings.get_setting("physics/3d/default_gravity")
 
+@export var animation_player: AnimationPlayer
+
 @export_group("Camera")
 @export var look_sensitivity: float = 0.005
 @export var max_up_angle: float = 90.0
@@ -27,12 +29,32 @@ var gravity: float = ProjectSettings.get_setting("physics/3d/default_gravity")
 @export_group("Quirky Movement")
 @export var bhop_frame_window: int = 2
 
+@export_group("Crouching")
+@export_range(0, 2) var crouch_seconds: float = 0.2
+
 
 var timedelta: float
 var grounded_timer: int
 
 var wish_jump: bool = false
 var third_person: bool = false
+var crouching: bool = false
+
+
+func crouch(crouch_state: bool) -> void:
+    if crouching == crouch_state:
+        return
+    crouching = crouch_state
+    var crouch_speed = 1 / crouch_seconds
+    # FIXME: midair crouch should drag feet up, not head down
+    if crouch_state:
+        animation_player.play(&"crouch", -1, crouch_speed)
+    else:
+        animation_player.play(&"crouch", -1, -crouch_speed, true)
+    
+func toggle_crouch() -> void:
+    crouch(!crouching)
+
 
 
 func get_input_dir():
@@ -101,7 +123,6 @@ func tick_movement() -> void:
     else:
         wish_jump = Input.is_action_just_pressed(&"jump")
     if wish_jump and on_ground:
-        print(grounded_timer <= bhop_frame_window)
         velocity.y = jump_velocity
 
 
@@ -111,6 +132,9 @@ func _physics_process(delta):
     if Input.is_action_just_pressed(&"third_person"):
         third_person = not third_person
     camera.position.z = 5 if third_person else 0
+    
+    if Input.is_action_just_pressed(&"crouch"):
+        toggle_crouch()
     
     if is_on_floor():
         if grounded_timer < 0:
