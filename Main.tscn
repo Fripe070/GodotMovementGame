@@ -1,6 +1,7 @@
-[gd_scene load_steps=16 format=3 uid="uid://5o1x2u3d0nfv"]
+[gd_scene load_steps=17 format=3 uid="uid://5o1x2u3d0nfv"]
 
 [ext_resource type="PackedScene" uid="uid://d1rf8jxqx2lvx" path="res://Player.tscn" id="1_mykwi"]
+[ext_resource type="PackedScene" uid="uid://bi545qlj5mtfm" path="res://hud.tscn" id="2_jctrp"]
 
 [sub_resource type="ProceduralSkyMaterial" id="ProceduralSkyMaterial_tm7ks"]
 sky_horizon_color = Color(0.64625, 0.65575, 0.67075, 1)
@@ -52,6 +53,9 @@ shadow_enabled = true
 
 [node name="Player" parent="." instance=ExtResource("1_mykwi")]
 auto_jump = true
+
+[node name="Hud" parent="." node_paths=PackedStringArray("player") instance=ExtResource("2_jctrp")]
+player = NodePath("../Player")
 
 [node name="Ground" type="StaticBody3D" parent="."]
 

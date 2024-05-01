@@ -105,8 +105,14 @@ func apply_friction() -> void:
 
 
 func tick_movement() -> void:
+    # Amalgimation of AirMove and GroundMove functions
     var old_velocity = velocity
+    is_on_ground = is_on_floor()
     
+    # https://www.ryanliptak.com/blog/rampsliding-quake-engine-quirk/#what-about-surfing-like-in-counter-strike-surf-maps
+    if velocity.y > 180:
+        is_on_ground = false
+        
     if is_on_ground and grounded_timer > bhop_frame_window:
         apply_friction()
         
@@ -128,7 +134,6 @@ func tick_movement() -> void:
 
 func _physics_process(delta):
     timedelta = delta
-    is_on_ground = is_on_floor()
     
     if Input.is_action_just_pressed(&"third_person"):
         third_person = not third_person
@@ -137,6 +142,7 @@ func _physics_process(delta):
     if Input.is_action_just_pressed(&"crouch"):
         toggle_crouch()
     
+    # FIXME: Move into tick movement
     if is_on_ground:
         if grounded_timer < 0:
             grounded_timer = 0
