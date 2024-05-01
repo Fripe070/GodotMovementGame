@@ -110,7 +110,7 @@ func tick_movement() -> void:
     is_on_ground = is_on_floor()
     
     # https://www.ryanliptak.com/blog/rampsliding-quake-engine-quirk/#what-about-surfing-like-in-counter-strike-surf-maps
-    if velocity.y > 180:
+    if velocity.y > 180:  # FIXME: 180 is an absurd value in this ctx... div by like 50 or smth
         is_on_ground = false
         
     if is_on_ground and grounded_timer > bhop_frame_window:
