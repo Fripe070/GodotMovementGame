@@ -35,6 +35,7 @@ var gravity: float = ProjectSettings.get_setting("physics/3d/default_gravity")
 
 var timedelta: float
 var grounded_timer: int
+var is_on_ground: bool
 
 var wish_jump: bool = false
 var third_person: bool = false
@@ -96,7 +97,7 @@ func apply_friction() -> void:
         return
     
     var drop: float = 0.0
-    if is_on_floor():
+    if is_on_ground:
         var control: float = stop_speed if stop_speed < speed else speed
         drop += control * friction * timedelta
         
@@ -104,14 +105,13 @@ func apply_friction() -> void:
 
 
 func tick_movement() -> void:
-    var on_ground = is_on_floor()
     var old_velocity = velocity
     
-    if on_ground and grounded_timer > bhop_frame_window:
+    if is_on_ground and grounded_timer > bhop_frame_window:
         apply_friction()
         
-    var max_speed = max_ground_speed if on_ground else max_air_speed
-    var acceleration = ground_acceleration if on_ground else air_acceleration
+    var max_speed = max_ground_speed if is_on_ground else max_air_speed
+    var acceleration = ground_acceleration if is_on_ground else air_acceleration
     
     var input_dir = get_input_dir()
     accelerate(input_dir, max_speed, acceleration)
@@ -122,12 +122,13 @@ func tick_movement() -> void:
         wish_jump = Input.is_action_pressed(&"jump")
     else:
         wish_jump = Input.is_action_just_pressed(&"jump")
-    if wish_jump and on_ground:
+    if wish_jump and is_on_ground:
         velocity.y = jump_velocity
 
 
 func _physics_process(delta):
     timedelta = delta
+    is_on_ground = is_on_floor()
     
     if Input.is_action_just_pressed(&"third_person"):
         third_person = not third_person
@@ -136,7 +137,7 @@ func _physics_process(delta):
     if Input.is_action_just_pressed(&"crouch"):
         toggle_crouch()
     
-    if is_on_floor():
+    if is_on_ground:
         if grounded_timer < 0:
             grounded_timer = 0
         grounded_timer += 1
@@ -148,11 +149,11 @@ func _physics_process(delta):
     tick_movement()
     move_and_slide()
     
-    #while debug_meshes:
-        #debug_meshes.pop_back().queue_free()
+    while debug_meshes:
+        debug_meshes.pop_back().queue_free()
     #debug_meshes.append(Draw3d.line(position, position+Vector3(velocity.x, 0, velocity.z), Color.PALE_VIOLET_RED))
     #move_and_slide()
-    #debug_meshes.append(Draw3d.line(position, position+Vector3(velocity.x, 0, velocity.z), Color.PURPLE))
+    debug_meshes.append(Draw3d.line(position, position+Vector3(velocity.x, 0, velocity.z), Color.PURPLE))
     
 var debug_meshes: Array[MeshInstance3D]
     
