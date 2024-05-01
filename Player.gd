@@ -12,26 +12,27 @@ var gravity: float = ProjectSettings.get_setting("physics/3d/default_gravity")
 @export_group("Inputs")
 @export var forward_importance = 1.0
 @export var side_importance = 1.0
-@export var autojump: bool = false
+@export var auto_jump: bool = false
 
 @export_group("Movement")
 @export var jump_velocity: float = 270 / 50
-@export var normal_acceleration: float = 20.0
-@export var air_acceleration: float = 100.0
-@export var friction: float = 20.0
+@export var ground_acceleration: float = 250.0
+@export var air_acceleration: float = 85.0
+@export var friction: float = 6.0
 @export var stop_speed: float = 10.0
+@export var snap_tp_stationary_speed: float = 1.0
+@export var max_ground_speed: float = 10.0
+@export var max_air_speed: float = 1.5
 
-@export var air_speed_cap: float = 30.0
+@export_group("Quirky Movement")
+@export var bhop_frame_window: int = 2
 
 
-
-var timedelta
+var timedelta: float
+var grounded_timer: int
 
 var wish_jump: bool = false
 var third_person: bool = false
-
-# FIXME: fix acceleration not being applied correctly (maybe)
-# FIXME: Fix movement being super slow, and just generally make the code more accurate by scaling by ,ove forward and right variables, als ofigure out what their defaults are
 
 
 func get_input_dir():
@@ -45,109 +46,63 @@ func get_input_dir():
         forwards * forward_importance,
     )).normalized()
     
+    
+func accelerate(wish_dir: Vector3, max_speed: float, accel: float) -> void:
+    var projected_speed = velocity.dot(wish_dir)
+    
+    var add_speed = max_speed - projected_speed
+    if add_speed <= 0:
+        return
+    
+    const surface_friction = 1
+    var accel_speed = timedelta * accel * max_speed * surface_friction;
+    
+    if accel_speed > add_speed:
+        accel_speed = add_speed
+    velocity += wish_dir * accel_speed
+
 
 func apply_friction() -> void:
-    # https://github.com/id-Software/Quake-III-Arena/blob/dbe4ddb10315479fc00086f08e25d968b4b43c49/code/game/bg_pmove.c#L172-L230
     # https://github.com/ValveSoftware/source-sdk-2013/blob/0d8dceea4310fde5706b3ce1c70609d72a38efdf/sp/src/game/shared/gamemovement.cpp#L1612-L1679
-    if is_on_floor():
-        velocity.y = 0
-        
-    var speed = velocity.length()	
-    if speed < 1:
+    # https://github.com/id-Software/Quake-III-Arena/blob/dbe4ddb10315479fc00086f08e25d968b4b43c49/code/game/bg_pmove.c#L172-L230
+    var speed = velocity.length()
+    if speed == 0:
+        return
+    if speed < snap_tp_stationary_speed:
         velocity.x = 0
         velocity.z = 0
         return
     
-    # FIXME: Rename this
-    var drop = 0
+    var drop: float = 0.0
     if is_on_floor():
         var control: float = stop_speed if stop_speed < speed else speed
         drop += control * friction * timedelta
-    var new_speed = maxf(0, speed - drop)
-    new_speed /= speed
-    velocity *= new_speed
-
-
-func air_accelerate(wish_dir: Vector3, wish_speed: float, accel: float):
-    # https://github.com/ValveSoftware/source-sdk-2013/blob/0d8dceea4310fde5706b3ce1c70609d72a38efdf/sp/src/game/shared/gamemovement.cpp#L1707-L1748
-
-    var wish_speed2 = wish_speed  # ?
-    
-    if wish_speed > air_speed_cap:
-        wish_speed = air_speed_cap
-    
-    var current_speed = velocity.dot(wish_dir)
-    
-    var add_speed = wish_speed - current_speed
-    if add_speed <= 0:
-        return
-    
-    const surface_friction = 1
-    var accel_speed = timedelta * accel * wish_speed2 * surface_friction;
-    
-    if accel_speed > add_speed:
-        accel_speed = add_speed
         
-    velocity += wish_dir * accel_speed
-    
+    velocity *= maxf(0, speed - drop) / speed
 
-func accelerate(wish_dir: Vector3, wish_speed: float, accel: float):
-    # https://github.com/ValveSoftware/source-sdk-2013/blob/0d8dceea4310fde5706b3ce1c70609d72a38efdf/sp/src/game/shared/gamemovement.cpp#L1822-L1854
-    # This gives cause for a lot of movement tech
-    var current_speed = velocity.dot(wish_dir)
+
+func tick_movement() -> void:
+    var on_ground = is_on_floor()
+    var old_velocity = velocity
     
-    var add_speed = wish_speed - current_speed
-    if add_speed <= 0:
-        return
-    
-    const surface_friction = 1
-    var accel_speed = timedelta * accel * wish_speed * surface_friction;
-    
-    if accel_speed > add_speed:
-        accel_speed = add_speed
+    if on_ground and grounded_timer > bhop_frame_window:
+        apply_friction()
         
-    velocity += wish_dir * accel_speed
-
-
-func air_move() -> void:
-    # https://github.com/id-Software/Quake-III-Arena/blob/dbe4ddb10315479fc00086f08e25d968b4b43c49/code/game/bg_pmove.c#L601-L658
-    apply_friction()
-    #print("Jump")
+    var max_speed = max_ground_speed if on_ground else max_air_speed
+    var acceleration = ground_acceleration if on_ground else air_acceleration
     
+    var input_dir = get_input_dir()
+    accelerate(input_dir, max_speed, acceleration)
+    velocity.y -= gravity * timedelta
     
-    var move_dir: Vector3 = get_input_dir()
-    
-    air_accelerate(move_dir, 10, air_acceleration)
-    
-    # Is this where surfing takes place?
-    # https://github.com/id-Software/Quake-III-Arena/blob/dbe4ddb10315479fc00086f08e25d968b4b43c49/code/game/bg_pmove.c#L639-L645
-    
-    
-func walk_move() -> void:
-    # https://github.com/id-Software/Quake-III-Arena/blob/dbe4ddb10315479fc00086f08e25d968b4b43c49/code/game/bg_pmove.c#L692-L809
-    if wish_jump and is_on_floor():
-        wish_jump = false
-        air_move()
+    var wish_jump: bool = false
+    if auto_jump:
+        wish_jump = Input.is_action_pressed(&"jump")
+    else:
+        wish_jump = Input.is_action_just_pressed(&"jump")
+    if wish_jump and on_ground:
+        print(grounded_timer <= bhop_frame_window)
         velocity.y = jump_velocity
-        return
-    
-    apply_friction()
-    
-    # FIXME: Scale by moveright and moveforward
-    #var forward = Input.get_action_strength(&"move_forward") - Input.get_action_strength(&"move_backward")
-    #var right = Input.get_action_strength(&"move_right") - Input.get_action_strength(&"move_left")
-    
-    var move_dir: Vector3 = get_input_dir()
-    
-    # FIXME: Crouch speed adjust?
-    # https://github.com/id-Software/Quake-III-Arena/blob/dbe4ddb10315479fc00086f08e25d968b4b43c49/code/game/bg_pmove.c#L752-L757
-    
-    # FIXME: More sliding shenanigans
-    # https://github.com/id-Software/Quake-III-Arena/blob/dbe4ddb10315479fc00086f08e25d968b4b43c49/code/game/bg_pmove.c#L770-L776
-    # Look out for anything mentioning SURF_SLICK?
-    
-    accelerate(move_dir, 6, normal_acceleration)
-    
 
 
 func _physics_process(delta):
@@ -155,32 +110,29 @@ func _physics_process(delta):
     
     if Input.is_action_just_pressed(&"third_person"):
         third_person = not third_person
-        
     camera.position.z = 5 if third_person else 0
     
-    
-    # FIXME: Allows for a bit kinder jumping, I might remove this later.
-    if autojump:
-        wish_jump = Input.is_action_pressed(&"jump")
-    elif Input.is_action_just_pressed(&"jump"):
-        wish_jump = true
-    elif Input.is_action_just_released(&"jump"):
-        wish_jump = false
-    
-    # https://github.com/id-Software/Quake-III-Arena/blob/dbe4ddb10315479fc00086f08e25d968b4b43c49/code/game/bg_pmove.c#L1988-L1994
-    #if is_on_floor():
     if is_on_floor():
-        walk_move()
+        if grounded_timer < 0:
+            grounded_timer = 0
+        grounded_timer += 1
     else:
-        air_move()
+        if grounded_timer > 0:
+            grounded_timer = 0
+        grounded_timer = -1
     
-    if not is_on_floor():
-        velocity.y -= gravity * delta
-        
-    # I prob need to implemenet the contents of PM_StepSlideMove
+    tick_movement()
     move_and_slide()
-
-
+    
+    #while debug_meshes:
+        #debug_meshes.pop_back().queue_free()
+    #debug_meshes.append(Draw3d.line(position, position+Vector3(velocity.x, 0, velocity.z), Color.PALE_VIOLET_RED))
+    #move_and_slide()
+    #debug_meshes.append(Draw3d.line(position, position+Vector3(velocity.x, 0, velocity.z), Color.PURPLE))
+    
+var debug_meshes: Array[MeshInstance3D]
+    
+    
 func _unhandled_input(event: InputEvent) -> void:
     if event is InputEventMouseButton:
         Input.set_mouse_mode(Input.MOUSE_MODE_CAPTURED)
