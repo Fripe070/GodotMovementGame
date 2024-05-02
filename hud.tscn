@@ -52,3 +52,11 @@ offset_bottom = 63.0
 text = "FPS: 10"
 label_settings = SubResource("LabelSettings_w7nag")
 horizontal_alignment = 2
+
+[node name="dashLabel" type="Label" parent="."]
+offset_left = 8.0
+offset_top = 228.0
+offset_right = 125.0
+offset_bottom = 283.0
+text = "100%"
+label_settings = SubResource("LabelSettings_wvvtw")

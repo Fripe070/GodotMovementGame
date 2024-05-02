@@ -29,7 +29,18 @@ var gravity: float = ProjectSettings.get_setting("physics/3d/default_gravity")
 @export var gravity_mult: float = 1.0
 
 @export_group("Quirky Movement")
-@export var bhop_frame_window: int = 2
+@export var bhop_tick_window: int = 2
+@export var coyote_ticks: int = 0.1 * 60
+
+@export_group("Dash")
+@export var dash_count: int = 1
+@export var dash_speed: float = 20
+@export_range(0, 2, 0.01, "or_greater") var dash_penalty_seconds: float = 0.6
+@export_range(0, 2, 0.01, "or_greater") var dash_penalty_start_seconds: float = 0.2
+@export_exp_easing var dash_penalty_ease: float = 1
+@export_range(0, 2) var grounded_dash_speed_mult: float = 1
+@export_range(0, 1) var dash_penalty_mult_min: float = 0.25
+var dash_penalty_mult_max: float = 1  # Should not be controlled by user, that's other vars' job
 
 @export_group("Crouching")
 @export_range(0, 2) var crouch_seconds: float = 0.2
@@ -37,13 +48,46 @@ var gravity: float = ProjectSettings.get_setting("physics/3d/default_gravity")
 
 var timedelta: float
 var grounded_timer: int
-var is_on_ground: bool
+var remaining_dashes: int = dash_count
 
+var is_on_ground: bool = false
 var wish_jump: bool = false
 var third_person: bool = false
 var crouching: bool = false
+var coyote: bool = true
 
 
+func can_jump() -> bool:
+    return (
+        is_on_ground 
+        or (coyote and grounded_timer > -coyote_ticks)
+    )
+    
+func jump():
+    velocity.y = max(jump_velocity, velocity.y)
+    coyote = false
+    
+func can_dash() -> bool:
+    return remaining_dashes > 0
+    
+func _calc_dash_mult() -> float:
+    if is_on_ground:
+        return grounded_dash_speed_mult
+        
+    var speed_mult: float = 1
+    var time_off_ground: float = float(-grounded_timer) / Engine.physics_ticks_per_second
+    speed_mult = (time_off_ground - dash_penalty_start_seconds) / dash_penalty_seconds
+    speed_mult = ease(speed_mult, dash_penalty_ease)
+    speed_mult = clamp(speed_mult, dash_penalty_mult_min, dash_penalty_mult_max)
+    return speed_mult
+    
+func dash():
+    var forwards: Vector3 = -camera.global_transform.basis.z.normalized()
+    velocity += forwards * (dash_speed * _calc_dash_mult())
+    #remaining_dashes -= 1
+    
+    
+    
 func crouch(crouch_state: bool) -> void:
     if crouching == crouch_state:
         return
@@ -59,6 +103,34 @@ func toggle_crouch() -> void:
     crouch(!crouching)
 
 
+func move_and_slide_surf() -> bool:
+    # Custom move_and_slide implementation that allows for surfing
+    # https://github.com/EricXu1728/Godot4SourceEngineMovement/blob/0276011420626dbaa91e553bc81a56520db0ad2d/Scripts/playerMovementScripts/player.gd#L79-L126
+    var collided: bool = false
+    is_on_ground = false
+
+    var checkMotion := velocity * (1/60.0)
+    checkMotion.y  -= gravity * gravity_mult * (1/360.0)
+    var testcol := move_and_collide(checkMotion, true)
+
+    if testcol and testcol.get_normal().angle_to(up_direction) < floor_max_angle:
+        is_on_ground = true
+
+    # Loop performing the move
+    var motion := velocity * timedelta
+    for step in max_slides:
+        var collision := move_and_collide(motion)
+        if not collision: # If no collision has occured, we have moved the entire wanted distance
+            break
+        collided = true
+
+        # Calculate velocity to slide along the surface
+        var normal = collision.get_normal()
+        motion = collision.get_remainder().slide(normal)
+        velocity = velocity.slide(normal)
+    return collided
+
+    
 
 func get_input_dir():
     # Something is wrong with my math... it should be forward - backward?
@@ -81,6 +153,7 @@ func accelerate(wish_dir: Vector3, max_speed: float, accel: float) -> void:
     
     const surface_friction = 1
     var accel_speed = timedelta * accel * max_speed * surface_friction;
+    
     
     if accel_speed > add_speed:
         accel_speed = add_speed
@@ -109,14 +182,14 @@ func apply_friction() -> void:
 func tick_movement() -> void:
     # Amalgimation of AirMove and GroundMove functions
     var old_velocity = velocity
-    is_on_ground = is_on_floor()
+    #is_on_ground = is_on_floor()
     
     # https://www.ryanliptak.com/blog/rampsliding-quake-engine-quirk/#what-about-surfing-like-in-counter-strike-surf-maps
     # https://github.com/id-Software/Quake/blob/bf4ac424ce754894ac8f1dae6a3981954bc9852d/QW/client/pmove.c#L587-L590
     if velocity.y > 180:  # FIXME: 180 is an absurd value in this ctx... div by like 50 or smth
         is_on_ground = false
         
-    if is_on_ground and grounded_timer > bhop_frame_window:
+    if is_on_ground and grounded_timer > bhop_tick_window:
         apply_friction()
         
     var max_speed = max_ground_speed if is_on_ground else max_air_speed
@@ -131,19 +204,28 @@ func tick_movement() -> void:
         wish_jump = Input.is_action_pressed(&"jump")
     else:
         wish_jump = Input.is_action_just_pressed(&"jump")
-    if wish_jump and is_on_ground:
-        velocity.y = jump_velocity
+    if wish_jump and can_jump():
+        jump()
+        
+    if Input.is_action_just_pressed(&"dash") and can_dash():
+        dash()
+    
+    # FIXME: Don't steal this, but actually understand and reimplement it from scratch?
+    # This might have worked in godot 3...
+    # FIXME: Holding W (and S? find source) should not allow surfing
+    # FIXME: Weird jittery motion when surfing?
+    var prev_onground = is_on_ground
+    move_and_slide_surf()
+    if prev_onground and not is_on_ground:
+        coyote = true
 
 
 func _physics_process(delta):
     timedelta = delta
     
-    if Input.is_action_just_pressed(&"third_person"):
-        third_person = not third_person
-    camera.position.z = 5 if third_person else 0
-    
     if Input.is_action_just_pressed(&"crouch"):
         toggle_crouch()
+        
     
     # FIXME: Move into tick movement
     if is_on_ground:
@@ -153,19 +235,25 @@ func _physics_process(delta):
     else:
         if grounded_timer > 0:
             grounded_timer = 0
-        grounded_timer = -1
+        grounded_timer -= 1
     
     tick_movement()
-    move_and_slide()
     
     while debug_meshes:
         debug_meshes.pop_back().queue_free()
     #debug_meshes.append(Draw3d.line(position, position+Vector3(velocity.x, 0, velocity.z), Color.PALE_VIOLET_RED))
     #move_and_slide()
-    debug_meshes.append(Draw3d.line(position, position+Vector3(velocity.x, 0, velocity.z), Color.PURPLE))
+    #debug_meshes.append(Draw3d.line(position, position+Vector3(velocity.x, 0, velocity.z), Color.PURPLE))
+    debug_meshes.append(Draw3d.line(position, position+velocity, Color.PURPLE))
     
 var debug_meshes: Array[MeshInstance3D]
     
+
+func _process(delta):
+    if Input.is_action_just_pressed(&"third_person"):
+        third_person = not third_person
+    camera.position.z = 5 if third_person else 0
+
     
 func _unhandled_input(event: InputEvent) -> void:
     if event is InputEventMouseButton:

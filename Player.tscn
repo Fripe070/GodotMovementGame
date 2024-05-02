@@ -1,11 +1,13 @@
-[gd_scene load_steps=7 format=3 uid="uid://d1rf8jxqx2lvx"]
+[gd_scene load_steps=8 format=3 uid="uid://d1rf8jxqx2lvx"]
 
 [ext_resource type="Script" path="res://Player.gd" id="1_tnwjw"]
+[ext_resource type="PackedScene" uid="uid://bi545qlj5mtfm" path="res://hud.tscn" id="2_2n7lr"]
 
 [sub_resource type="CapsuleShape3D" id="CapsuleShape3D_i860k"]
 radius = 0.35
 
 [sub_resource type="CapsuleMesh" id="CapsuleMesh_4yle5"]
+lightmap_size_hint = Vector2i(12, 13)
 radius = 0.35
 
 [sub_resource type="Animation" id="Animation_evv03"]
@@ -150,3 +152,6 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.5, 0)
 libraries = {
 "": SubResource("AnimationLibrary_ur1ql")
 }
+
+[node name="Hud" parent="." node_paths=PackedStringArray("player") instance=ExtResource("2_2n7lr")]
+player = NodePath("..")

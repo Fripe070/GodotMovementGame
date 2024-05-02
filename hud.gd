@@ -7,7 +7,7 @@ extends CanvasLayer
 func _ready():
     pass
 
-func _process(delta):
+func _physics_process(delta):
     var vel2d = Vector2(player.velocity.x, player.velocity.z)
     
     $velocityLabel.text = "%v" % player.velocity
@@ -17,3 +17,4 @@ func _process(delta):
 
     $FPSLabel.text = "FPS: %s" % int(1/delta)
 
+    $dashLabel.text = "%f" % (player._calc_dash_mult())
