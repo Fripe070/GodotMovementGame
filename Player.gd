@@ -34,15 +34,10 @@ var gravity: float = ProjectSettings.get_setting("physics/3d/default_gravity")
 
 @export_group("Dash")
 @export var dash_count: int = 1
-@export var dash_speed: float = 20
-@export_range(0, 2, 0.01, "or_greater") var dash_penalty_seconds: float = 0.6
-@export_range(0, 2, 0.01, "or_greater") var dash_penalty_start_seconds: float = 0.2
-@export_exp_easing var dash_penalty_ease: float = 1
-@export_range(0, 2) var grounded_dash_speed_mult: float = 1
-@export_range(0, 1) var dash_penalty_mult_min: float = 0.25
-var dash_penalty_mult_max: float = 1  # Should not be controlled by user, that's other vars' job
+@export_range(0, 50, 0.1, "or_greater", "or_less") var dash_speed: float = 50
+@export_range(0, 2) var dash_up_mult: float = 0.65
 
-@export_group("Crouching")
+@export_group("Sliding")
 @export_range(0, 2) var crouch_seconds: float = 0.2
 
 
@@ -70,22 +65,12 @@ func jump():
 func can_dash() -> bool:
     return remaining_dashes > 0
     
-func _calc_dash_mult() -> float:
-    if is_on_ground:
-        return grounded_dash_speed_mult
-        
-    var speed_mult: float = 1
-    var time_off_ground: float = float(-grounded_timer) / Engine.physics_ticks_per_second
-    speed_mult = (time_off_ground - dash_penalty_start_seconds) / dash_penalty_seconds
-    speed_mult = ease(speed_mult, dash_penalty_ease)
-    speed_mult = clamp(speed_mult, dash_penalty_mult_min, dash_penalty_mult_max)
-    return speed_mult
-    
 func dash():
     var forwards: Vector3 = -camera.global_transform.basis.z.normalized()
-    velocity += forwards * (dash_speed * _calc_dash_mult())
-    #remaining_dashes -= 1
-    
+    if forwards.y > 0:
+        forwards.y *= dash_up_mult
+    velocity = forwards * dash_speed
+
     
     
 func crouch(crouch_state: bool) -> void:
@@ -210,15 +195,21 @@ func tick_movement() -> void:
     if Input.is_action_just_pressed(&"dash") and can_dash():
         dash()
     
-    # FIXME: Don't steal this, but actually understand and reimplement it from scratch?
-    # This might have worked in godot 3...
-    # FIXME: Holding W (and S? find source) should not allow surfing
-    # FIXME: Weird jittery motion when surfing?
     var prev_onground = is_on_ground
+    # FIXME: Holding W (and S? find source) should not allow surfing
     move_and_slide_surf()
     if prev_onground and not is_on_ground:
-        coyote = true
-
+        on_takeoff()
+    elif not prev_onground and is_on_ground:
+        on_land()
+        
+# FIXME: When wallrunning is in, this should also happen then, maybe another function?
+func on_land() -> void:
+    pass
+    
+func on_takeoff() -> void:
+    coyote = true
+    pass
 
 func _physics_process(delta):
     timedelta = delta

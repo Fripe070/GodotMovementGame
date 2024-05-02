@@ -16,5 +16,3 @@ func _physics_process(delta):
     $groundedLabel.text = "Grounded" if player.is_on_ground else "In air"
 
     $FPSLabel.text = "FPS: %s" % int(1/delta)
-
-    $dashLabel.text = "%f" % (player._calc_dash_mult())
