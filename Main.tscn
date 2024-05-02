@@ -52,6 +52,8 @@ shadow_enabled = true
 
 [node name="Player" parent="." instance=ExtResource("1_mykwi")]
 auto_jump = true
+dash_speed = 16.0
+dash_up_mult = 0.75
 
 [node name="Ground" type="StaticBody3D" parent="."]
 

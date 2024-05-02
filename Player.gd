@@ -35,7 +35,7 @@ var gravity: float = ProjectSettings.get_setting("physics/3d/default_gravity")
 @export_group("Dash")
 @export var dash_count: int = 1
 @export_range(0, 50, 0.1, "or_greater", "or_less") var dash_speed: float = 50
-@export_range(0, 2) var dash_up_mult: float = 0.65
+@export_range(0.5, 1.5) var dash_up_mult: float = 1.0
 
 @export_group("Sliding")
 @export_range(0, 2) var crouch_seconds: float = 0.2
@@ -66,6 +66,7 @@ func can_dash() -> bool:
     return remaining_dashes > 0
     
 func dash():
+    # FIXME: When pointing into the floor (not any surface!) the vector should be directed upwards to be paralel (y=0)
     var forwards: Vector3 = -camera.global_transform.basis.z.normalized()
     if forwards.y > 0:
         forwards.y *= dash_up_mult
