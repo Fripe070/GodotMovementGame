@@ -3,6 +3,8 @@ extends CharacterBody3D
 var gravity: float = ProjectSettings.get_setting("physics/3d/default_gravity")
 
 @export var animation_player: AnimationPlayer
+@export var collider: CollisionShape3D
+@export var display: MeshInstance3D
 
 @export_group("Camera")
 @export var look_sensitivity: float = 0.005
@@ -39,6 +41,7 @@ var gravity: float = ProjectSettings.get_setting("physics/3d/default_gravity")
 
 @export_group("Sliding")
 @export_range(0, 2) var crouch_seconds: float = 0.2
+@export_range(0, 1) var crouch_height_mult: float = 0.5
 
 
 var timedelta: float
@@ -50,6 +53,13 @@ var wish_jump: bool = false
 var third_person: bool = false
 var crouching: bool = false
 var coyote: bool = true
+
+
+var original_collider_shape: CapsuleShape3D
+var original_display_shape: CapsuleMesh
+func _ready() -> void:
+    original_collider_shape = collider.shape.duplicate()
+    original_display_shape = display.mesh.duplicate()
 
 
 func can_jump() -> bool:
@@ -66,11 +76,13 @@ func can_dash() -> bool:
     return remaining_dashes > 0
     
 func dash():
+    coyote = false
     # FIXME: When pointing into the floor (not any surface!) the vector should be directed upwards to be paralel (y=0)
     var forwards: Vector3 = -camera.global_transform.basis.z.normalized()
     if forwards.y > 0:
         forwards.y *= dash_up_mult
     velocity = forwards * dash_speed
+    remaining_dashes -= 1
 
     
     
@@ -78,12 +90,16 @@ func crouch(crouch_state: bool) -> void:
     if crouching == crouch_state:
         return
     crouching = crouch_state
-    var crouch_speed = 1 / crouch_seconds
-    # FIXME: midair crouch should drag feet up, not head down
-    if crouch_state:
-        animation_player.play(&"crouch", -1, crouch_speed)
-    else:
-        animation_player.play(&"crouch", -1, -crouch_speed, true)
+    # FIXME: THis is bad and sad
+    collider.shape.height = original_collider_shape.height * (crouch_height_mult if crouching else 1)
+    display.mesh.height = original_display_shape.height * (crouch_height_mult if crouching else 1)
+    
+    #var crouch_speed = 1 / crouch_seconds
+    ## FIXME: midair crouch should drag feet up, not head down
+    #if crouch_state:
+        #animation_player.play(&"crouch", -1, crouch_speed)
+    #else:
+        #animation_player.play(&"crouch", -1, -crouch_speed, true)
     
 func toggle_crouch() -> void:
     crouch(!crouching)
@@ -204,8 +220,13 @@ func tick_movement() -> void:
     elif not prev_onground and is_on_ground:
         on_land()
         
+    if is_on_ground:
+        remaining_dashes = dash_count
+        
+        
 # FIXME: When wallrunning is in, this should also happen then, maybe another function?
 func on_land() -> void:
+    remaining_dashes = dash_count
     pass
     
 func on_takeoff() -> void:
@@ -215,9 +236,8 @@ func on_takeoff() -> void:
 func _physics_process(delta):
     timedelta = delta
     
-    if Input.is_action_just_pressed(&"crouch"):
-        toggle_crouch()
-        
+    
+    crouch(Input.is_action_pressed(&"crouch"))
     
     # FIXME: Move into tick movement
     if is_on_ground:

@@ -7,12 +7,12 @@ sky_horizon_color = Color(0.64625, 0.65575, 0.67075, 1)
 ground_bottom_color = Color(4.21144e-07, 0.201647, 0.226393, 1)
 ground_horizon_color = Color(0.64625, 0.65575, 0.67075, 1)
 
-[sub_resource type="Sky" id="Sky_0ia8s"]
+[sub_resource type="Sky" id="Sky_nvr65"]
 sky_material = SubResource("ProceduralSkyMaterial_tm7ks")
 
 [sub_resource type="Environment" id="Environment_b6qus"]
 background_mode = 2
-sky = SubResource("Sky_0ia8s")
+sky = SubResource("Sky_nvr65")
 tonemap_mode = 2
 glow_enabled = true
 
@@ -233,6 +233,21 @@ mesh = SubResource("BoxMesh_rcixd")
 [node name="StaticBody3D2" type="StaticBody3D" parent="MeshInstance3D18"]
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="MeshInstance3D18/StaticBody3D2"]
+shape = SubResource("BoxShape3D_p81u1")
+
+[node name="CollisionShape3D2" type="CollisionShape3D" parent="MeshInstance3D18/StaticBody3D2"]
+shape = SubResource("BoxShape3D_p81u1")
+
+[node name="MeshInstance3D24" type="MeshInstance3D" parent="."]
+transform = Transform3D(27.0663, 0.169382, 0, -71.8565, 0.0638015, 0, 0, 0, 161.066, -107.347, 34.8777, -12.6828)
+mesh = SubResource("BoxMesh_rcixd")
+
+[node name="StaticBody3D2" type="StaticBody3D" parent="MeshInstance3D24"]
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="MeshInstance3D24/StaticBody3D2"]
+shape = SubResource("BoxShape3D_p81u1")
+
+[node name="CollisionShape3D2" type="CollisionShape3D" parent="MeshInstance3D24/StaticBody3D2"]
 shape = SubResource("BoxShape3D_p81u1")
 
 [node name="MeshInstance3D19" type="MeshInstance3D" parent="."]
