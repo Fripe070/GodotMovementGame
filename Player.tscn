@@ -18,6 +18,7 @@ animation_player = NodePath("AnimationPlayer")
 collider = NodePath("CollisionShape3D")
 display = NodePath("CollisionShape3D/MeshInstance3D")
 gravity_mult = 1.05
+low_friction_time = 3.0
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1, 0)

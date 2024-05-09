@@ -40,12 +40,15 @@ var gravity: float = ProjectSettings.get_setting("physics/3d/default_gravity")
 @export_range(0.5, 1.5) var dash_up_mult: float = 1.0
 
 @export_group("Sliding")
-@export_range(0, 2) var crouch_seconds: float = 0.2
 @export_range(0, 1) var crouch_height_mult: float = 0.5
+@export var slide_friction: float = 1.0
+@export_range(0, 10) var low_friction_time: float = 0.5
+@export_exp_easing() var low_friction_fallof: float = 1
 
 
 var timedelta: float
 var grounded_timer: int
+var crouched_timer: int
 var remaining_dashes: int = dash_count
 
 var is_on_ground: bool = false
@@ -84,22 +87,28 @@ func dash():
     velocity = forwards * dash_speed
     remaining_dashes -= 1
 
-    
+func get_slide_friction() -> float:
+    var crouched_seconds: float = float(crouched_timer) / Engine.physics_ticks_per_second
+    var factor = crouched_seconds / low_friction_time
+    var frict = lerpf(slide_friction, friction, factor)
+    # It increasing infinitely is a desired effect, as it makes the player eventually stop.
+    #frict = clampf(frict, slide_friction, friction)
+    return frict
     
 func crouch(crouch_state: bool) -> void:
     if crouching == crouch_state:
         return
     crouching = crouch_state
-    # FIXME: THis is bad and sad
+    
+    var initial_height: float = collider.shape.height
     collider.shape.height = original_collider_shape.height * (crouch_height_mult if crouching else 1)
     display.mesh.height = original_display_shape.height * (crouch_height_mult if crouching else 1)
     
-    #var crouch_speed = 1 / crouch_seconds
-    ## FIXME: midair crouch should drag feet up, not head down
-    #if crouch_state:
-        #animation_player.play(&"crouch", -1, crouch_speed)
-    #else:
-        #animation_player.play(&"crouch", -1, -crouch_speed, true)
+    var height_delta: float = (initial_height - display.mesh.height) / 2
+    neck.position -= up_direction * height_delta * .5
+    if is_on_ground:
+        position -= up_direction * height_delta
+    
     
 func toggle_crouch() -> void:
     crouch(!crouching)
@@ -173,10 +182,14 @@ func apply_friction() -> void:
         velocity.z = 0
         return
     
+    var applicable_friction = get_slide_friction() if crouching else friction
+    if applicable_friction == 0:
+        return
+    
     var drop: float = 0.0
     if is_on_ground:
         var control: float = stop_speed if stop_speed < speed else speed
-        drop += control * friction * timedelta
+        drop += control * applicable_friction * timedelta
         
     velocity *= maxf(0, speed - drop) / speed
 
@@ -238,6 +251,11 @@ func _physics_process(delta):
     
     
     crouch(Input.is_action_pressed(&"crouch"))
+    # FIXME: Weird on slopes, should just slide down more and more and accelerate
+    if not crouching or not is_on_ground:
+        crouched_timer = 0
+    elif crouching:
+        crouched_timer += 1
     
     # FIXME: Move into tick movement
     if is_on_ground:
