@@ -29,6 +29,7 @@ var gravity: float = ProjectSettings.get_setting("physics/3d/default_gravity")
 @export var max_air_speed: float = 1.5
 # We may want the player to fall slightly faster than other objects
 @export var gravity_mult: float = 1.0
+@export var standing_height: float = 2.0
 
 @export_group("Quirky Movement")
 @export var bhop_tick_window: int = 2
@@ -58,11 +59,10 @@ var crouching: bool = false
 var coyote: bool = true
 
 
-var original_collider_shape: CapsuleShape3D
-var original_display_shape: CapsuleMesh
 func _ready() -> void:
-    original_collider_shape = collider.shape.duplicate()
-    original_display_shape = display.mesh.duplicate()
+    collider.shape.height = standing_height
+    display.mesh.height = standing_height
+    
 
 
 func can_jump() -> bool:
@@ -101,8 +101,8 @@ func crouch(crouch_state: bool) -> void:
     crouching = crouch_state
     
     var initial_height: float = collider.shape.height
-    collider.shape.height = original_collider_shape.height * (crouch_height_mult if crouching else 1)
-    display.mesh.height = original_display_shape.height * (crouch_height_mult if crouching else 1)
+    collider.shape.height = standing_height * (crouch_height_mult if crouching else 1)
+    display.mesh.height = standing_height * (crouch_height_mult if crouching else 1)
     
     var height_delta: float = (initial_height - display.mesh.height) / 2
     neck.position -= up_direction * height_delta * .5
