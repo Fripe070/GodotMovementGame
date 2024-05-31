@@ -1,7 +1,8 @@
-[gd_scene load_steps=6 format=3 uid="uid://d1rf8jxqx2lvx"]
+[gd_scene load_steps=7 format=3 uid="uid://d1rf8jxqx2lvx"]
 
 [ext_resource type="Script" path="res://Player.gd" id="1_tnwjw"]
 [ext_resource type="PackedScene" uid="uid://bi545qlj5mtfm" path="res://hud.tscn" id="2_2n7lr"]
+[ext_resource type="PackedScene" uid="uid://c2q1upqwva7t1" path="res://GrapplingHook.tscn" id="2_upghx"]
 
 [sub_resource type="CapsuleShape3D" id="CapsuleShape3D_i860k"]
 radius = 0.35
@@ -40,3 +41,7 @@ libraries = {
 
 [node name="Hud" parent="." node_paths=PackedStringArray("player") instance=ExtResource("2_2n7lr")]
 player = NodePath("..")
+
+[node name="GrapplingHook" parent="." node_paths=PackedStringArray("apply_force_to", "raycast_origin") instance=ExtResource("2_upghx")]
+apply_force_to = NodePath("..")
+raycast_origin = NodePath("../Neck/Camera")
